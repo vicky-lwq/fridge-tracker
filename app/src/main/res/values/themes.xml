@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base launch theme, shown briefly before Compose content sets in.
+         Actual color/typography system lives in ui/theme (Compose MaterialTheme). -->
+    <style name="Theme.FridgeTracker" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#FCFDF7</item>
+        <item name="android:windowBackground">#FCFDF7</item>
+    </style>
+</resources>

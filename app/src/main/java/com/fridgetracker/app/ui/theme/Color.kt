@@ -1,0 +1,82 @@
+package com.fridgetracker.app.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+// Light scheme — values taken verbatim from docs/ui-20260716-fridge-tracker.md section 2.1.
+// Seed color: #386A46 (warm forest green).
+val md_theme_light_primary = Color(0xFF386A46)
+val md_theme_light_onPrimary = Color(0xFFFFFDF9)
+val md_theme_light_primaryContainer = Color(0xFFB9F0B8)
+val md_theme_light_onPrimaryContainer = Color(0xFF062109)
+val md_theme_light_secondary = Color(0xFF52664F)
+val md_theme_light_onSecondary = Color(0xFFFFFDF9)
+val md_theme_light_secondaryContainer = Color(0xFFD5EACE)
+val md_theme_light_onSecondaryContainer = Color(0xFF101F0F)
+val md_theme_light_tertiary = Color(0xFF5B6E1A)
+val md_theme_light_onTertiary = Color(0xFFFFFDF9)
+val md_theme_light_tertiaryContainer = Color(0xFFDDEE9C)
+val md_theme_light_onTertiaryContainer = Color(0xFF181E00)
+val md_theme_light_error = Color(0xFFBA1A1A)
+val md_theme_light_onError = Color(0xFFFFFBFF)
+val md_theme_light_errorContainer = Color(0xFFFFDAD6)
+val md_theme_light_onErrorContainer = Color(0xFF410002)
+val md_theme_light_background = Color(0xFFFCFDF7)
+val md_theme_light_onBackground = Color(0xFF1A1C18)
+val md_theme_light_surface = Color(0xFFFCFDF7)
+val md_theme_light_onSurface = Color(0xFF1A1C18)
+val md_theme_light_surfaceVariant = Color(0xFFDFE4D7)
+val md_theme_light_onSurfaceVariant = Color(0xFF43483D)
+val md_theme_light_outline = Color(0xFF73796C)
+val md_theme_light_outlineVariant = Color(0xFFC3C8BA)
+val md_theme_light_surfaceContainerLowest = Color(0xFFF7F9F1)
+val md_theme_light_surfaceContainerLow = Color(0xFFF1F4EB)
+val md_theme_light_surfaceContainer = Color(0xFFEBEEE5)
+val md_theme_light_surfaceContainerHigh = Color(0xFFE5E8DF)
+val md_theme_light_surfaceContainerHighest = Color(0xFFE0E3D9)
+
+// Custom semantic "warning" tokens (light) — M3 has no standard role for this,
+// exposed separately via ExtendedColorScheme, not folded into tertiary.
+val md_theme_light_warning = Color(0xFF8B5A00)
+val md_theme_light_onWarning = Color(0xFFFFFBFF)
+val md_theme_light_warningContainer = Color(0xFFFFDDA6)
+val md_theme_light_onWarningContainer = Color(0xFF2B1800)
+
+// Dark scheme — hand-derived from the same #386A46 seed following standard M3
+// tone-pairing (container=tone30/onContainer=tone90, role=tone80/onRole=tone20 etc).
+// Not run through Material Theme Builder; verify contrast before shipping (same
+// caveat the UI doc already flags for the light scheme's custom warning tokens).
+val md_theme_dark_primary = Color(0xFF9DD49B)
+val md_theme_dark_onPrimary = Color(0xFF063910)
+val md_theme_dark_primaryContainer = Color(0xFF1F5129)
+val md_theme_dark_onPrimaryContainer = Color(0xFFB9F0B8)
+val md_theme_dark_secondary = Color(0xFFB9CCB4)
+val md_theme_dark_onSecondary = Color(0xFF24341F)
+val md_theme_dark_secondaryContainer = Color(0xFF3A4C35)
+val md_theme_dark_onSecondaryContainer = Color(0xFFD5EACE)
+val md_theme_dark_tertiary = Color(0xFFC3D46B)
+val md_theme_dark_onTertiary = Color(0xFF2D3900)
+val md_theme_dark_tertiaryContainer = Color(0xFF434F00)
+val md_theme_dark_onTertiaryContainer = Color(0xFFDDEE9C)
+val md_theme_dark_error = Color(0xFFFFB4AB)
+val md_theme_dark_onError = Color(0xFF690005)
+val md_theme_dark_errorContainer = Color(0xFF93000A)
+val md_theme_dark_onErrorContainer = Color(0xFFFFDAD6)
+val md_theme_dark_background = Color(0xFF12140F)
+val md_theme_dark_onBackground = Color(0xFFE2E4DA)
+val md_theme_dark_surface = Color(0xFF12140F)
+val md_theme_dark_onSurface = Color(0xFFE2E4DA)
+val md_theme_dark_surfaceVariant = Color(0xFF43483D)
+val md_theme_dark_onSurfaceVariant = Color(0xFFC3C8BA)
+val md_theme_dark_outline = Color(0xFF8D9285)
+val md_theme_dark_outlineVariant = Color(0xFF43483D)
+val md_theme_dark_surfaceContainerLowest = Color(0xFF0C0F0A)
+val md_theme_dark_surfaceContainerLow = Color(0xFF1A1C18)
+val md_theme_dark_surfaceContainer = Color(0xFF1E211B)
+val md_theme_dark_surfaceContainerHigh = Color(0xFF282B25)
+val md_theme_dark_surfaceContainerHighest = Color(0xFF333630)
+
+// Custom semantic "warning" tokens (dark)
+val md_theme_dark_warning = Color(0xFFFFBA6C)
+val md_theme_dark_onWarning = Color(0xFF452B00)
+val md_theme_dark_warningContainer = Color(0xFF633F00)
+val md_theme_dark_onWarningContainer = Color(0xFFFFDDA6)
