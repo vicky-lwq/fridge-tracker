@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fridgetracker.app.ui.navigation.FridgeNavHost
 import com.fridgetracker.app.ui.theme.FridgeTrackerTheme
+import com.fridgetracker.app.viewmodel.FoodViewModel
 import com.fridgetracker.app.viewmodel.FoodViewModelFactory
 
 class MainActivity : ComponentActivity() {
@@ -20,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             FridgeTrackerTheme {
                 val app = application as FridgeTrackerApplication
-                val viewModel = viewModel(factory = FoodViewModelFactory(app.repository))
+                val viewModel = viewModel<FoodViewModel>(factory = FoodViewModelFactory(app.repository))
 
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestPermission()
