@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
-@Database(entities = [FoodItem::class], version = 1, exportSchema = true)
+@Database(entities = [FoodItem::class], version = 2, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class FridgeDatabase : RoomDatabase() {
 
@@ -22,7 +22,10 @@ abstract class FridgeDatabase : RoomDatabase() {
                     context.applicationContext,
                     FridgeDatabase::class.java,
                     "fridge_tracker.db"
-                ).build().also { INSTANCE = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                    .also { INSTANCE = it }
             }
     }
 }

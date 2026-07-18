@@ -18,10 +18,6 @@ class FoodRepository(private val dao: FoodDao) {
 
     suspend fun delete(item: FoodItem) = dao.delete(item)
 
-    /** Used to restore an item after the user taps "撤销" on the delete Snackbar.
-     * Reinserted as a new row (id reset to 0) since the original row was already deleted. */
-    suspend fun restore(item: FoodItem) = dao.insert(item.copy(id = 0))
-
     /** Items with remaining days <= 3 (including already expired), for the daily notification check. */
     suspend fun getItemsNeedingAttention(today: LocalDate = LocalDate.now()): List<FoodItem> =
         dao.getAllSnapshot().filter { item ->

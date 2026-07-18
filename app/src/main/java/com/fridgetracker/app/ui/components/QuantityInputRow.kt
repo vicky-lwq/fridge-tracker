@@ -1,6 +1,9 @@
 package com.fridgetracker.app.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -17,21 +20,50 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
-import com.fridgetracker.app.data.FoodCategory
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.fridgetracker.app.data.QuantityUnit
 
 /**
- * Single-select category picker for the add/edit form. Deliberately a different
- * component shape than CategoryDrawerContent: this is single-value form entry,
- * that is multi-select browsing — different scenarios, not an inconsistency.
- *
- * v2: category is now an optional field (never enters an error state).
+ * Optional weight/count field. Neither sub-control ever enters an error state — both are
+ * selective, so an empty quantity doesn't invalidate the unit and vice versa. New entries
+ * default the unit to "斤" (handled by the caller's initial state, not here); editing an
+ * existing item always reflects that item's stored unit.
  */
+@Composable
+fun QuantityInputRow(
+    quantityText: String,
+    onQuantityTextChange: (String) -> Unit,
+    unit: QuantityUnit,
+    onUnitChange: (QuantityUnit) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedTextField(
+            value = quantityText,
+            onValueChange = onQuantityTextChange,
+            modifier = Modifier.weight(2f),
+            label = { Text("重量/数量") },
+            placeholder = { Text("例如：1.5") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            singleLine = true
+        )
+        QuantityUnitDropdown(
+            selected = unit,
+            onSelect = onUnitChange,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryDropdownField(
-    selected: FoodCategory?,
-    onSelect: (FoodCategory) -> Unit,
+private fun QuantityUnitDropdown(
+    selected: QuantityUnit,
+    onSelect: (QuantityUnit) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -46,13 +78,10 @@ fun CategoryDropdownField(
                 .fillMaxWidth()
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable),
             readOnly = true,
-            value = selected?.displayName ?: "",
+            value = selected.displayName,
             onValueChange = {},
-            label = { Text("分类") },
-            placeholder = { Text("选填，可不选") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            singleLine = true,
-            maxLines = 1
+            singleLine = true
         )
 
         DropdownMenu(
@@ -60,20 +89,14 @@ fun CategoryDropdownField(
             onDismissRequest = { expanded = false },
             modifier = Modifier.exposedDropdownSize()
         ) {
-            FoodCategory.entries.forEach { category ->
+            QuantityUnit.entries.forEach { candidate ->
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            category.displayName,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
+                    text = { Text(candidate.displayName) },
                     onClick = {
-                        onSelect(category)
+                        onSelect(candidate)
                         expanded = false
                     },
-                    colors = if (category == selected) {
+                    colors = if (candidate == selected) {
                         MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.onSecondaryContainer
                         )

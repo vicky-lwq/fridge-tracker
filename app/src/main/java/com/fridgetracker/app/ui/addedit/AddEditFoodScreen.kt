@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,7 +21,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -34,12 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fridgetracker.app.data.FoodCategory
 import com.fridgetracker.app.data.FoodItem
+import com.fridgetracker.app.data.QuantityUnit
 import com.fridgetracker.app.ui.components.CategoryDropdownField
+import com.fridgetracker.app.ui.components.ExpiryInputField
+import com.fridgetracker.app.ui.components.ExpiryInputMode
+import com.fridgetracker.app.ui.components.QuantityInputRow
 import com.fridgetracker.app.util.DateFormatUtils
 import com.fridgetracker.app.viewmodel.FoodViewModel
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,17 +51,24 @@ fun AddEditFoodScreen(
 
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf<FoodCategory?>(null) }
-    var expiryDate by remember { mutableStateOf<LocalDate?>(null) }
     var addedDate by remember { mutableStateOf(LocalDate.now()) }
+
+    var expiryMode by remember { mutableStateOf(ExpiryInputMode.DATE) }
+    var expiryDateValue by remember { mutableStateOf<LocalDate?>(null) }
+    var expiryDaysText by remember { mutableStateOf("") }
+
+    var quantityText by remember { mutableStateOf("") }
+    var quantityUnit by remember { mutableStateOf(QuantityUnit.JIN) }
 
     var initialName by remember { mutableStateOf("") }
     var initialCategory by remember { mutableStateOf<FoodCategory?>(null) }
     var initialExpiryDate by remember { mutableStateOf<LocalDate?>(null) }
+    var initialQuantityText by remember { mutableStateOf("") }
+    var initialQuantityUnit by remember { mutableStateOf(QuantityUnit.JIN) }
 
     var nameError by remember { mutableStateOf(false) }
-    var categoryError by remember { mutableStateOf(false) }
     var expiryError by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
+    var daysError by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(foodId) {
@@ -70,17 +76,31 @@ fun AddEditFoodScreen(
             viewModel.getById(foodId)?.let { item ->
                 name = item.name
                 category = item.category
-                expiryDate = item.expiryDate
+                expiryDateValue = item.expiryDate
                 addedDate = item.addedDate
+                quantityText = item.quantity?.let(::formatQuantity) ?: ""
+                quantityUnit = item.quantityUnit ?: QuantityUnit.JIN
+
                 initialName = item.name
                 initialCategory = item.category
                 initialExpiryDate = item.expiryDate
+                initialQuantityText = quantityText
+                initialQuantityUnit = quantityUnit
             }
         }
     }
 
+    fun resolvedExpiryDate(): LocalDate? = when (expiryMode) {
+        ExpiryInputMode.DATE -> expiryDateValue
+        ExpiryInputMode.DAYS -> expiryDaysText.trim().toIntOrNull()?.let { LocalDate.now().plusDays(it.toLong()) }
+    }
+
     fun hasUnsavedChanges(): Boolean =
-        name != initialName || category != initialCategory || expiryDate != initialExpiryDate
+        name != initialName ||
+            category != initialCategory ||
+            resolvedExpiryDate() != initialExpiryDate ||
+            quantityText != initialQuantityText ||
+            quantityUnit != initialQuantityUnit
 
     fun attemptCancel() {
         if (hasUnsavedChanges()) showDiscardDialog = true else onDone()
@@ -88,24 +108,47 @@ fun AddEditFoodScreen(
 
     fun attemptSave() {
         nameError = name.isBlank()
-        categoryError = category == null
-        expiryError = expiryDate == null
-        if (nameError || categoryError || expiryError) return
 
-        val currentCategory = category ?: return
-        val currentExpiry = expiryDate ?: return
+        val daysInt = expiryDaysText.trim().toIntOrNull()
+        when (expiryMode) {
+            ExpiryInputMode.DATE -> {
+                expiryError = expiryDateValue == null
+                daysError = false
+            }
+            ExpiryInputMode.DAYS -> {
+                daysError = daysInt == null || daysInt < 0 || daysInt > 365
+                expiryError = false
+            }
+        }
+
+        if (nameError || expiryError || daysError) return
+
+        val currentExpiry = when (expiryMode) {
+            ExpiryInputMode.DATE -> expiryDateValue ?: return
+            ExpiryInputMode.DAYS -> LocalDate.now().plusDays((daysInt ?: return).toLong())
+        }
+        val currentQuantity = quantityText.trim().toDoubleOrNull()
+
         if (isEditMode && foodId != null) {
             viewModel.updateFood(
                 FoodItem(
                     id = foodId,
                     name = name.trim(),
-                    category = currentCategory,
+                    category = category,
                     addedDate = addedDate,
-                    expiryDate = currentExpiry
+                    expiryDate = currentExpiry,
+                    quantity = currentQuantity,
+                    quantityUnit = quantityUnit
                 )
             )
         } else {
-            viewModel.addFood(name.trim(), currentCategory, currentExpiry)
+            viewModel.addFood(
+                name = name.trim(),
+                category = category,
+                expiryDate = currentExpiry,
+                quantity = currentQuantity,
+                quantityUnit = quantityUnit
+            )
         }
         onDone()
     }
@@ -161,38 +204,38 @@ fun AddEditFoodScreen(
 
             CategoryDropdownField(
                 selected = category,
-                onSelect = {
-                    category = it
-                    categoryError = false
-                },
+                onSelect = { category = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
-                isError = categoryError,
-                supportingText = if (categoryError) "请选择分类" else null
+                    .padding(top = 24.dp)
             )
 
-            OutlinedTextField(
-                value = expiryDate?.let { DateFormatUtils.formatExpiryDisplay(it) } ?: "",
-                onValueChange = {},
-                readOnly = true,
+            ExpiryInputField(
+                mode = expiryMode,
+                onModeChange = { expiryMode = it },
+                dateValue = expiryDateValue,
+                onDateValueChange = {
+                    expiryDateValue = it
+                    expiryError = false
+                },
+                dateError = expiryError,
+                daysValue = expiryDaysText,
+                onDaysValueChange = {
+                    expiryDaysText = it
+                    daysError = false
+                },
+                daysError = daysError,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 24.dp),
-                label = { Text("过期日期 *") },
-                placeholder = { Text("请选择过期日期") },
-                isError = expiryError,
-                supportingText = if (expiryError) {
-                    { Text("请选择过期日期") }
-                } else {
-                    null
-                },
-                trailingIcon = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Filled.CalendarToday, contentDescription = "选择日期")
-                    }
-                },
-                singleLine = true
+                    .padding(top = 24.dp)
+            )
+
+            QuantityInputRow(
+                quantityText = quantityText,
+                onQuantityTextChange = { quantityText = it },
+                unit = quantityUnit,
+                onUnitChange = { quantityUnit = it },
+                modifier = Modifier.padding(top = 24.dp)
             )
 
             Row(
@@ -221,36 +264,6 @@ fun AddEditFoodScreen(
         }
     }
 
-    if (showDatePicker) {
-        val initialMillis = (expiryDate ?: LocalDate.now())
-            .atStartOfDay(ZoneOffset.UTC)
-            .toInstant()
-            .toEpochMilli()
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
-
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        expiryDate = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDate()
-                        expiryError = false
-                    }
-                    showDatePicker = false
-                }) {
-                    Text("确定")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("取消")
-                }
-            }
-        ) {
-            androidx.compose.material3.DatePicker(state = datePickerState)
-        }
-    }
-
     if (showDiscardDialog) {
         AlertDialog(
             onDismissRequest = { showDiscardDialog = false },
@@ -272,3 +285,6 @@ fun AddEditFoodScreen(
         )
     }
 }
+
+private fun formatQuantity(value: Double): String =
+    if (value == value.toLong().toDouble()) value.toLong().toString() else value.toString()

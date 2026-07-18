@@ -19,12 +19,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AcUnit
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.EggAlt
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.Liquor
 import androidx.compose.material.icons.outlined.LocalCafe
 import androidx.compose.material.icons.outlined.LocalFlorist
 import androidx.compose.material.icons.outlined.LunchDining
 import androidx.compose.material.icons.outlined.MoreHoriz
 import androidx.compose.material.icons.outlined.SetMeal
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,10 +53,14 @@ import com.fridgetracker.app.data.FoodCategory
 import com.fridgetracker.app.data.FoodItem
 import kotlinx.coroutines.delay
 
+private const val NAME_TRUNCATE_LENGTH = 12
+
 /**
- * Swipe-to-delete list card. Swiping past the threshold plays a 200ms shrink+fade
- * exit before `onDelete` actually fires, so the row is still on screen while animating.
- * Not going past the threshold lets SwipeToDismissBoxState's default spring settle back.
+ * Swipe-to-delete list card. Swiping past the threshold always bounces the row back to
+ * its settled position first (`confirmValueChange` never returns true), then shows an
+ * AlertDialog for confirmation. Only on "删除" does the 200ms shrink+fade exit play,
+ * followed by `onDelete`. This two-phase order avoids racing SwipeToDismissBoxState's
+ * suspend `reset()` against the dialog's own dismiss timing.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,15 +71,14 @@ fun FoodItemCard(
     modifier: Modifier = Modifier
 ) {
     var isRemoved by remember(item.id) { mutableStateOf(false) }
+    var showDeleteConfirm by remember(item.id) { mutableStateOf(false) }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.StartToEnd || value == SwipeToDismissBoxValue.EndToStart) {
-                isRemoved = true
-                true
-            } else {
-                false
+                showDeleteConfirm = true
             }
+            false
         }
     )
 
@@ -143,11 +149,13 @@ fun FoodItemCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = item.category.displayName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        item.category?.let { category ->
+                            Text(
+                                text = category.displayName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     Spacer(Modifier.width(12.dp))
                     ExpiryBadge(remainingDays = item.remainingDays())
@@ -155,9 +163,37 @@ fun FoodItemCard(
             }
         }
     }
+
+    if (showDeleteConfirm) {
+        val truncatedName = if (item.name.length > NAME_TRUNCATE_LENGTH) {
+            item.name.take(NAME_TRUNCATE_LENGTH) + "…"
+        } else {
+            item.name
+        }
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("删除「$truncatedName」？") },
+            text = { Text("删除后不可恢复。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    isRemoved = true
+                }) {
+                    Text("删除", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("取消")
+                }
+            }
+        )
+    }
 }
 
-fun categoryIcon(category: FoodCategory): ImageVector = when (category) {
+/** Falls back to a generic icon when the item has no category (category is optional in v2). */
+fun categoryIcon(category: FoodCategory?): ImageVector = when (category) {
+    null -> Icons.Outlined.Inventory2
     FoodCategory.PRODUCE -> Icons.Outlined.LocalFlorist
     FoodCategory.MEAT -> Icons.Outlined.LunchDining
     FoodCategory.SEAFOOD -> Icons.Outlined.SetMeal

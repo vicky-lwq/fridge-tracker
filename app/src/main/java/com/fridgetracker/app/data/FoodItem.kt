@@ -8,9 +8,11 @@ import java.time.LocalDate
 data class FoodItem(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val category: FoodCategory,
+    val category: FoodCategory?,
     val addedDate: LocalDate,
-    val expiryDate: LocalDate
+    val expiryDate: LocalDate,
+    val quantity: Double? = null,
+    val quantityUnit: QuantityUnit? = null
 ) {
     /** Days remaining until expiry. Negative means already expired. */
     fun remainingDays(today: LocalDate = LocalDate.now()): Long =

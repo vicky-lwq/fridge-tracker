@@ -15,4 +15,10 @@ class Converters {
 
     @TypeConverter
     fun toCategoryName(category: FoodCategory?): String? = category?.name
+
+    @TypeConverter
+    fun fromQuantityUnitName(name: String?): QuantityUnit? = name?.let { QuantityUnit.valueOf(it) }
+
+    @TypeConverter
+    fun toQuantityUnitName(unit: QuantityUnit?): String? = unit?.name
 }
